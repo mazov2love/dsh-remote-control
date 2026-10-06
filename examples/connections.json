@@ -1,0 +1,5 @@
+{
+  "targets": [
+    { "id": "technical", "url": "http://127.0.0.1:3080", "authFile": "C:/path/your-dsh-home/remote-control/technical.auth.json" }
+  ]
+}

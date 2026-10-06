@@ -1,0 +1,5 @@
+- insert:
+    - id: remote-dsh-control
+      name: '@mazov2love/dsh-remote-control'
+    - id: remote-dsh-control-skill
+      name: '@mazov2love/dsh-remote-control/skill'

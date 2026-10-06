@@ -1,0 +1,14 @@
+node_modules/
+*.tgz
+.local/
+coverage/
+*.log
+*.local.json
+*.local-url.txt
+.env
+.env.*
+!.env.example
+*.auth.json
+connections.json
+!examples/connections.json
+state.json

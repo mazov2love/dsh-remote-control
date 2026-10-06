@@ -1,0 +1,16 @@
+{
+  "name": "@mazov2love/dsh-remote-control",
+  "version": "1.0.0",
+  "description": "DSH tools for operating other DSH instances through authenticated backend APIs.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./skill": "./src/skill.js", "./client": "./src/client.js", "./operations": "./src/operations.js", "./controller": "./src/controller.js", "./package.json": "./package.json" },
+  "files": ["src", "skills", "cordis.patch.yml", "README.md", "AGENTS.md", "ARCHITECTURE.md", "COMPATIBILITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "TESTING.md", "LICENSE", "examples"],
+  "scripts": { "test": "node --test --test-isolation=none test/*.test.js", "check": "node scripts/check.mjs", "check:package": "node scripts/check-package.mjs", "verify": "npm run check && npm test && npm run check:package" },
+  "packageManager": "npm@11.6.2",
+  "engines": { "node": ">=22.19.0" },
+  "dependencies": { "ws": "8.21.0" },
+  "dsh": { "engines": { "dsh": ">=0.2.0-rc.2 <0.3.0" }, "bundle": { "patch": "./cordis.patch.yml" } },
+  "publishConfig": { "access": "public" },
+  "license": "MIT"
+}
