@@ -6,11 +6,11 @@
 
 插件版本 **1.0.0**，已验证的 DSH 基线为 **0.2.0-rc.2**，Node.js 要求 22.19+。具体边界见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
-使用 DSH 官方命令安装到调用方的 profile。自定义 DSH_HOME 时，先设置为你实际使用的数据目录；使用默认目录时无需设置。以下 `YOUR_ACCOUNT` 是仓库所有者占位符，发布后替换为实际账号。
+使用 DSH 官方命令安装到调用方的 profile。自定义 DSH_HOME 时，先设置为你实际使用的数据目录；使用默认目录时无需设置。Git 安装要求仓库已上传，并包含 v1.0.0 标签。
 
 ```powershell
 $env:DSH_HOME = 'C:\path\your-dsh-home' # 仅自定义数据目录时设置
-dsh plugin --profile web add 'github:YOUR_ACCOUNT/dsh-remote-control#v1.0.0'
+dsh plugin --profile web add 'github:mazov2love/dsh-remote-control#v1.0.0'
 ```
 
 也可以下载或 clone 源码后安装：
