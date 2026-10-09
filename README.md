@@ -65,6 +65,76 @@ dsh plugin --profile web add 'C:\path\dsh-remote-control'
 
 连接配置改变后需要重载插件或重启调用方。重启不删除原有连接、引用和读取状态。令牌可通过对话提供，工具不会主动返回凭据；原始对话仍包含用户提供的令牌。
 
+## 建立一个独立的源码 DSH（Windows 示例）
+
+想保留日常 DSH，同时给 Agent 准备一个可以独立调整和测试的实例，可以另建源码目录、数据目录和端口。下面使用 `%USERPROFILE%\dsh-lab\deepseek-harness` 存源码、`%USERPROFILE%\.dsh-lab` 存 DSH 数据、8081 端口提供 Web；日常实例仍可使用原来的目录与 3080 端口。如果 8081 已被占用，换一个空闲端口。
+
+### 1. 下载并构建
+
+准备 Git、Node.js 和 pnpm；本插件验证基线要求 Node.js 22.19+，DSH 源码的实际 Node.js 与 pnpm 要求以所下载版本的 `package.json` 中 `engines`、`packageManager` 为准。在 PowerShell 执行以下命令，每一步成功后再继续；目录已存在时请换一个新目录，不要覆盖已有源码：
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\dsh-lab" | Out-Null
+Set-Location "$env:USERPROFILE\dsh-lab"
+git clone https://github.com/deepseek-ai/deepseek-harness.git
+Set-Location .\deepseek-harness
+pnpm install
+pnpm run build
+```
+
+构建步骤来自 [DSH 官方源码运行说明](https://github.com/deepseek-ai/deepseek-harness#run-from-source)。源码更新后通常需要重新安装依赖并构建；平时启动只运行 `pnpm dsh web`，无需每次构建。本插件已验证 DSH 0.2.0-rc.2，仓库最新源码可能变化，升级前请核对 [兼容性说明](COMPATIBILITY.md)。
+
+### 2. 在启动时单独指定环境变量
+
+新开一个 PowerShell 窗口，在该窗口执行：
+
+```powershell
+Set-Location "$env:USERPROFILE\dsh-lab\deepseek-harness"
+$env:DSH_HOME = "$env:USERPROFILE\.dsh-lab"
+$env:DSH_AGENTS_HOME = "$env:USERPROFILE\.agents-dsh-lab"
+pnpm dsh web --host 127.0.0.1 --port 8081
+```
+
+`DSH_HOME` 分开保存此实例的配置、凭据、会话和插件安装数据；`DSH_AGENTS_HOME` 分开默认的用户级 Skill 根目录，否则它可能仍使用共享的 `~/.agents`。这些赋值只影响当前终端及其子进程，关闭窗口后不会改变系统环境变量。在这个窗口里运行插件安装等管理命令，也会使用同一份独立数据目录。
+
+首次启动后，在新实例的页面配置模型与 API 凭据。终端会打印带 `?token=…` 的启动链接，可交给调用方 Agent 配置连接；重启后以本次打印的链接为准。需要后台式使用、不自动打开浏览器时，在命令末尾加 `--no-open`；结束进程可在启动窗口按 `Ctrl+C`。
+
+### 3. 做成双击启动的脚本
+
+把下面内容保存为 `start-dsh-lab.cmd`（注意扩展名是 `.cmd`，不是 `.txt`），构建完成后双击即可启动；也可以直接复制本仓库的 [启动模板](examples/start-dsh-lab.cmd)。前三个变量分别控制源码目录、数据目录和端口：
+
+```bat
+@echo off
+setlocal
+set "DSH_SOURCE=%USERPROFILE%\dsh-lab\deepseek-harness"
+set "DSH_HOME=%USERPROFILE%\.dsh-lab"
+set "DSH_LAB_PORT=8081"
+set "DSH_AGENTS_HOME=%USERPROFILE%\.agents-dsh-lab"
+
+if not exist "%DSH_SOURCE%\package.json" (
+  echo Source directory not found. Edit DSH_SOURCE in this script.
+  pause
+  exit /b 1
+)
+cd /d "%DSH_SOURCE%"
+call pnpm dsh web --host 127.0.0.1 --port %DSH_LAB_PORT%
+set "DSH_LAB_EXIT=%ERRORLEVEL%"
+if not "%DSH_LAB_EXIT%"=="0" pause
+endlocal & exit /b %DSH_LAB_EXIT%
+```
+
+`setlocal` 让环境变量仅作用于脚本及其启动的进程，不需要 `setx`，也不用更改 Windows 的 `HOME` 或 `USERPROFILE`。源码实例用其目录中的 `pnpm dsh` 启动；全局 `dsh web` 仍由原安装提供。要再开第三个实例，使用另一份源码目录，并修改数据目录、Skill 目录和端口。
+
+这是程序与 DSH 数据层面的分离，不是操作系统沙盒：两个实例仍以当前 Windows 用户的权限访问文件；手动选择相同项目目录、配置额外 Skill 路径或共享外部服务时，相应资源仍会共享。想让实验更独立，可以给它单独的项目目录。
+
+### 4. 也可以把整套工作交给现有 Agent
+
+如果现有 Agent 有终端与文件操作能力，可以把这一节直接交给它，或者这样说：
+
+> 请按本教程建立一个新的独立源码 DSH：新建源码目录，使用单独的 DSH_HOME、DSH_AGENTS_HOME 和空闲端口，安装依赖并构建，生成一键启动脚本，启动后验证 Web 可访问，再帮我配置 DSH Remote Control 连接；保留我原有实例的配置和数据。
+
+本插件安装在**发起调用的实例**；新建的目标实例无需安装配套插件。若新实例反过来也要控制其他 DSH，再在它自己的 `DSH_HOME` 下安装本插件。
+
 ## 手动连接配置（可选）
 
 默认读取 `$DSH_HOME/remote-control/connections.json`：
